@@ -1,0 +1,18 @@
+services:
+  # default configuration for services in *this* file
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+    public: false
+
+  Tourze\DeliveryAddressBundle\Repository\:
+    resource: '../../Repository/'
+  Tourze\DeliveryAddressBundle\Procedure\:
+    resource: '../../Procedure/'
+  Tourze\DeliveryAddressBundle\EventListener\:
+    resource: '../../EventListener/'
+  Tourze\DeliveryAddressBundle\Controller\:
+    resource: '../../Controller/'
+    tags: ['controller.service_arguments']
+  Tourze\DeliveryAddressBundle\Service\:
+    resource: '../../Service/'
