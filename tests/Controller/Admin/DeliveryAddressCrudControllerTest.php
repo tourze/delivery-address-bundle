@@ -22,11 +22,6 @@ use Tourze\PHPUnitSymfonyWebTest\AbstractEasyAdminControllerTestCase;
 #[RunTestsInSeparateProcesses]
 final class DeliveryAddressCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
-    protected function onSetUp(): void
-    {
-        // 在 createClient 前无法创建数据，因为容器未初始化
-    }
-
     protected function onTearDown(): void
     {
         // 在测试后清理（可选）
