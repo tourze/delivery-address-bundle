@@ -10,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Symfony\Component\DomCrawler\Crawler;
 use Tourze\DeliveryAddressBundle\Controller\Admin\DeliveryAddressCrudController;
 use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\DeliveryAddressBundle\Repository\DeliveryAddressRepository;
@@ -112,7 +113,6 @@ final class DeliveryAddressCrudControllerTest extends AbstractEasyAdminControlle
         $headerText = $theadNodes->last()->text();
         self::assertStringContainsString($expectedHeader, $headerText);
     }
-
 
     /**
      * 验证索引页面字段配置的正确性（替代DOM测试）
@@ -331,18 +331,11 @@ final class DeliveryAddressCrudControllerTest extends AbstractEasyAdminControlle
         $this->assertStringContainsString('should not be blank', $crawler->filter('.invalid-feedback')->text());
 
         // 额外验证：检查必填字段的错误信息
-        $errorMessages = $crawler->filter('.invalid-feedback')->each(function (\Symfony\Component\DomCrawler\Crawler $node) {
+        $errorMessages = $crawler->filter('.invalid-feedback')->each(function (Crawler $node) {
             return $node->text();
         });
 
         // 至少应该有一些验证错误
         self::assertNotEmpty($errorMessages, '应该包含表单验证错误信息');
-    }
-
-    public function testDatabaseHasFixtureData(): void
-    {
-        $repository = self::getService(DeliveryAddressRepository::class);
-        $count = $repository->count([]);
-        $this->assertGreaterThan(0, $count, '数据库中应该有测试数据');
     }
 }

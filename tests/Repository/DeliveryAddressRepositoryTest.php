@@ -22,13 +22,6 @@ final class DeliveryAddressRepositoryTest extends AbstractRepositoryTestCase
     protected function onSetUp(): void
     {
         $this->repository = $this->getRepository();
-
-        // 检查当前测试是否需要 DataFixtures 数据
-        $currentTest = $this->name();
-        if ('testCountWithDataFixtureShouldReturnGreaterThanZero' === $currentTest) {
-            // 为计数测试创建测试数据
-            $this->createTestDataForCountTest();
-        }
     }
 
     private function createTestDataForCountTest(): void

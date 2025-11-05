@@ -3,7 +3,5 @@ services:
     autowire: true
     autoconfigure: true
 
-  # DataFixtures services for development environment
   Tourze\DeliveryAddressBundle\DataFixtures\:
     resource: '../../DataFixtures/'
-    tags: ['doctrine.fixture.orm']

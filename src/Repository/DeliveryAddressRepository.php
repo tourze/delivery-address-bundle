@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tourze\DeliveryAddressBundle\Repository;
 
-use BizUserBundle\Repository\BizUserRepository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
@@ -20,7 +20,7 @@ class DeliveryAddressRepository extends ServiceEntityRepository
 {
     public function __construct(
         ManagerRegistry $registry,
-        private readonly BizUserRepository $bizUserRepository,
+        private readonly UserLoaderInterface $userLoader,
     ) {
         parent::__construct($registry, DeliveryAddress::class);
     }
@@ -39,7 +39,7 @@ class DeliveryAddressRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('a')
             ->join('a.user', 'u')
-            ->where('u.username = :userId')
+            ->where('u.userIdentifier = :userId')
             ->setParameter('userId', $userId)
             ->orderBy('a.isDefault', 'DESC')
             ->addOrderBy('a.createTime', 'DESC')
@@ -65,7 +65,7 @@ class DeliveryAddressRepository extends ServiceEntityRepository
     {
         $result = $this->createQueryBuilder('a')
             ->join('a.user', 'u')
-            ->where('u.username = :userId')
+            ->where('u.userIdentifier = :userId')
             ->andWhere('a.isDefault = :isDefault')
             ->setParameter('userId', $userId)
             ->setParameter('isDefault', true)
@@ -83,7 +83,7 @@ class DeliveryAddressRepository extends ServiceEntityRepository
             $user = $userOrUserId;
         } else {
             // 通过userIdentifier查找用户实体
-            $user = $this->bizUserRepository->findOneBy(['username' => $userOrUserId]);
+            $user = $this->userLoader->loadUserByIdentifier($userOrUserId);
 
             if (null === $user) {
                 return 0; // 用户不存在，没有需要更新的记录

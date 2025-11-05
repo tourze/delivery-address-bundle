@@ -7,8 +7,8 @@ namespace Tourze\DeliveryAddressBundle\DataFixtures;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
-use TelescopeDjango\Entity\User\User;
 use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
+use Tourze\UserServiceContracts\UserManagerInterface;
 
 class DeliveryAddressFixtures extends Fixture implements FixtureGroupInterface
 {
@@ -17,17 +17,19 @@ class DeliveryAddressFixtures extends Fixture implements FixtureGroupInterface
         return ['address', 'test'];
     }
 
+    public function __construct(private readonly UserManagerInterface $userManager)
+    {
+    }
+
     public function load(ObjectManager $manager): void
     {
         // 为每个地址创建独立的用户
         $users = [];
-        for ($i = 0; $i < 3; $i++) {
-            $user = new User();
-            $user->setUserFormatId($i + 1);
-            $manager->persist($user);
+        for ($i = 0; $i < 3; ++$i) {
+            $user = $this->userManager->createUser('DeliveryAddressFixtures_' . $i);
+            $this->userManager->saveUser($user);
             $users[] = $user;
         }
-        $manager->flush();
 
         $addressData = [
             [
