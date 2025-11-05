@@ -29,7 +29,6 @@ class DeliveryAddress implements \Stringable, ApiArrayInterface
     use BlameableAware;
     use IpTraceableAware;
 
-    /** @phpstan-ignore-next-line property.unusedType */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::BIGINT, options: ['comment' => '主键ID'])]
