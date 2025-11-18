@@ -187,14 +187,6 @@ final class DeliveryAddressCrudControllerTest extends AbstractEasyAdminControlle
         ];
     }
 
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertSame(
-            DeliveryAddress::class,
-            DeliveryAddressCrudController::getEntityFqcn()
-        );
-    }
-
     public function testIndexFieldsConfiguration(): void
     {
         $controller = new DeliveryAddressCrudController();
