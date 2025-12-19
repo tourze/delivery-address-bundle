@@ -8,7 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\DeliveryAddressBundle\Procedure\GetDeliveryAddressList;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 
 /**
  * @internal
@@ -59,7 +60,9 @@ final class GetDeliveryAddressListTest extends AbstractProcedureTestCase
         // 设置认证用户来模拟登录状态
         $this->setAuthenticatedUser($user);
 
-        $payload = $this->assertDeliveryAddressListPayload($this->procedure->execute());
+        $param = new \Tourze\DeliveryAddressBundle\Param\GetDeliveryAddressListParam();
+
+        $payload = $this->assertDeliveryAddressListPayload($this->procedure->execute($param));
         $this->assertCount(2, $payload['list']);
         $this->assertSame(2, $payload['pagination']['total']);
 
@@ -87,19 +90,20 @@ final class GetDeliveryAddressListTest extends AbstractProcedureTestCase
      */
     private function assertDeliveryAddressListPayload(mixed $result): array
     {
-        if (!is_array($result)) {
-            self::fail('Procedure 返回值必须为数组');
+        if (!$result instanceof ArrayResult) {
+            self::fail('Procedure 返回值必须为 ArrayResult');
         }
 
-        $this->assertListStructure($result);
-        $this->assertPaginationStructure($result);
+        $data = $result->toArray();
+        $this->assertListStructure($data);
+        $this->assertPaginationStructure($data);
 
         /** @var array{
          *     list: array<int, array{consignee: string, isDefault: bool}>,
          *     pagination: array{total: int, current: int, pageSize: int, hasMore: bool}
-         * } $result
+         * } $data
          */
-        return $result;
+        return $data;
     }
 
     /**

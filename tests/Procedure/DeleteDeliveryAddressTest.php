@@ -10,7 +10,8 @@ use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\DeliveryAddressBundle\Procedure\DeleteDeliveryAddress;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 
 /**
  * @internal
@@ -46,13 +47,17 @@ final class DeleteDeliveryAddressTest extends AbstractProcedureTestCase
         $this->persistAndFlush($address);
         $addressId = $address->getId();
         self::assertNotNull($addressId);
-        $this->procedure->addressId = $addressId;
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\DeleteDeliveryAddressParam(
+            addressId: $addressId,
+        );
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('__message', $result);
-        $this->assertEquals('删除成功', $result['__message']);
+        $result = $this->procedure->execute($param);
+
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertArrayHasKey('__message', $data);
+        $this->assertEquals('删除成功', $data['__message']);
 
         // 验证地址已被删除
         $this->assertEntityNotExists(DeliveryAddress::class, $addressId);
@@ -64,12 +69,14 @@ final class DeleteDeliveryAddressTest extends AbstractProcedureTestCase
         $user = $this->createNormalUser('user123', 'pass');
         $this->setAuthenticatedUser($user);
 
-        $this->procedure->addressId = 999;
+        $param = new \Tourze\DeliveryAddressBundle\Param\DeleteDeliveryAddressParam(
+            addressId: 999,
+        );
 
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('地址不存在');
 
-        $this->procedure->execute();
+        $this->procedure->execute($param);
     }
 
     public function testExecuteThrowsExceptionWhenUserMismatch(): void
@@ -94,12 +101,15 @@ final class DeleteDeliveryAddressTest extends AbstractProcedureTestCase
         $this->persistAndFlush($address);
         $addressId = $address->getId();
         self::assertNotNull($addressId);
-        $this->procedure->addressId = $addressId;
+
+        $param = new \Tourze\DeliveryAddressBundle\Param\DeleteDeliveryAddressParam(
+            addressId: $addressId,
+        );
 
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('地址不存在');
 
-        $this->procedure->execute();
+        $this->procedure->execute($param);
     }
 
     public function testGetLockResource(): void

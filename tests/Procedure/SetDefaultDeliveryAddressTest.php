@@ -10,7 +10,8 @@ use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\DeliveryAddressBundle\Procedure\SetDefaultDeliveryAddress;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 
 /**
  * @internal
@@ -62,13 +63,17 @@ final class SetDefaultDeliveryAddressTest extends AbstractProcedureTestCase
 
         // 设置认证用户来模拟登录状态
         $this->setAuthenticatedUser($user);
-        $this->procedure->addressId = $addressId;
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\SetDefaultDeliveryAddressParam(
+            addressId: $addressId,
+        );
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('__message', $result);
-        $this->assertEquals('设置成功', $result['__message']);
+        $result = $this->procedure->execute($param);
+
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertArrayHasKey('__message', $data);
+        $this->assertEquals('设置成功', $data['__message']);
 
         // 验证地址已设置为默认
         self::getEntityManager()->refresh($address);
@@ -86,12 +91,14 @@ final class SetDefaultDeliveryAddressTest extends AbstractProcedureTestCase
         $this->persistAndFlush($user);
         $this->setAuthenticatedUser($user);
 
-        $this->procedure->addressId = 999;
+        $param = new \Tourze\DeliveryAddressBundle\Param\SetDefaultDeliveryAddressParam(
+            addressId: 999,
+        );
 
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('地址不存在');
 
-        $this->procedure->execute();
+        $this->procedure->execute($param);
     }
 
     public function testExecuteThrowsExceptionWhenUserMismatch(): void
@@ -119,12 +126,15 @@ final class SetDefaultDeliveryAddressTest extends AbstractProcedureTestCase
         $user123 = $this->createNormalUser('user123', 'pass');
         $this->persistAndFlush($user123);
         $this->setAuthenticatedUser($user123);
-        $this->procedure->addressId = $addressId;
+
+        $param = new \Tourze\DeliveryAddressBundle\Param\SetDefaultDeliveryAddressParam(
+            addressId: $addressId,
+        );
 
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('地址不存在');
 
-        $this->procedure->execute();
+        $this->procedure->execute($param);
     }
 
     public function testGetLockResource(): void

@@ -7,7 +7,6 @@ namespace Tourze\DeliveryAddressBundle\Tests\Entity;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
-use Tourze\DeliveryAddressBundle\Exception\InvalidUserIdentifierException;
 use Tourze\GBT2261\Gender;
 use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
@@ -22,39 +21,11 @@ final class DeliveryAddressTest extends AbstractEntityTestCase
         return new DeliveryAddress();
     }
 
-    /**
-     * 创建测试用户
-     * @phpstan-ignore-next-line
-     */
-    private function createTestUser(string $userIdentifier = 'test-user'): UserInterface
+    private function createUserStub(string $userIdentifier): UserInterface
     {
-        if ('' === $userIdentifier) {
-            throw new InvalidUserIdentifierException($userIdentifier);
-        }
-
-        // 使用简单的匿名类实现，适用于实体测试
-        /** @phpstan-ignore-next-line */
-        return new class($userIdentifier) implements UserInterface {
-            public function __construct(private readonly string $userIdentifier)
-            {
-            }
-
-            /** @return non-empty-string */
-            public function getUserIdentifier(): string
-            {
-                return '' !== $this->userIdentifier ? $this->userIdentifier : 'default-user';
-            }
-
-            /** @return array<string> */
-            public function getRoles(): array
-            {
-                return ['ROLE_USER'];
-            }
-
-            public function eraseCredentials(): void
-            {
-            }
-        };
+        return $this->createConfiguredMock(UserInterface::class, [
+            'getUserIdentifier' => $userIdentifier,
+        ]);
     }
 
     /**
@@ -84,7 +55,7 @@ final class DeliveryAddressTest extends AbstractEntityTestCase
     public function testToString(): void
     {
         $address = $this->createEntity();
-        $user = $this->createTestUser('user123');
+        $user = $this->createUserStub('user123');
         $address->setUser($user);
         $address->setProvince('广东省');
         $address->setCity('深圳市');

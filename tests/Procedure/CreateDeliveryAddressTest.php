@@ -10,7 +10,8 @@ use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\DeliveryAddressBundle\Procedure\CreateDeliveryAddress;
 use Tourze\DeliveryAddressBundle\Repository\DeliveryAddressRepository;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 
 /**
  * @internal
@@ -32,25 +33,29 @@ final class CreateDeliveryAddressTest extends AbstractProcedureTestCase
         $user = $this->createNormalUser('user123', 'pass');
         $this->persistAndFlush($user);
         $this->setAuthenticatedUser($user);
-        $this->procedure->consignee = '张三';
-        $this->procedure->mobile = '13800138000';
-        $this->procedure->country = '中国';
-        $this->procedure->province = '广东省';
-        $this->procedure->provinceCode = '44';
-        $this->procedure->city = '深圳市';
-        $this->procedure->cityCode = '4403';
-        $this->procedure->district = '南山区';
-        $this->procedure->districtCode = '440305';
-        $this->procedure->addressLine = '科技园南路88号';
-        $this->procedure->postalCode = '518000';
-        $this->procedure->addressTag = '家';
-        $this->procedure->setDefault = false;
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\CreateDeliveryAddressParam(
+            consignee: '张三',
+            mobile: '13800138000',
+            province: '广东省',
+            city: '深圳市',
+            district: '南山区',
+            addressLine: '科技园南路88号',
+            country: '中国',
+            provinceCode: '44',
+            cityCode: '4403',
+            districtCode: '440305',
+            postalCode: '518000',
+            addressTag: '家',
+            setDefault: false,
+        );
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('__message', $result);
-        $this->assertEquals('创建成功', $result['__message']);
+        $result = $this->procedure->execute($param);
+
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertArrayHasKey('__message', $data);
+        $this->assertEquals('创建成功', $data['__message']);
 
         // 验证数据库中创建了新地址
         $repository = self::getService(DeliveryAddressRepository::class);
@@ -96,22 +101,25 @@ final class CreateDeliveryAddressTest extends AbstractProcedureTestCase
         $this->persistAndFlush($existingAddress);
 
         // 创建新的默认地址
-        $this->procedure->consignee = '张三';
-        $this->procedure->mobile = '13800138000';
-        $this->procedure->province = '广东省';
-        $this->procedure->provinceCode = '44';
-        $this->procedure->city = '深圳市';
-        $this->procedure->cityCode = '4403';
-        $this->procedure->district = '南山区';
-        $this->procedure->districtCode = '440305';
-        $this->procedure->addressLine = '科技园南路88号';
-        $this->procedure->setDefault = true;
+        $param = new \Tourze\DeliveryAddressBundle\Param\CreateDeliveryAddressParam(
+            consignee: '张三',
+            mobile: '13800138000',
+            province: '广东省',
+            city: '深圳市',
+            district: '南山区',
+            addressLine: '科技园南路88号',
+            provinceCode: '44',
+            cityCode: '4403',
+            districtCode: '440305',
+            setDefault: true,
+        );
 
-        $result = $this->procedure->execute();
+        $result = $this->procedure->execute($param);
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('__message', $result);
-        $this->assertEquals('创建成功', $result['__message']);
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertArrayHasKey('__message', $data);
+        $this->assertEquals('创建成功', $data['__message']);
 
         // 验证新地址为默认地址
         $repository = self::getService(DeliveryAddressRepository::class);

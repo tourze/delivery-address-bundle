@@ -8,7 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\DeliveryAddressBundle\Procedure\GetDefaultDeliveryAddress;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 
 /**
  * @internal
@@ -55,26 +56,29 @@ final class GetDefaultDeliveryAddressTest extends AbstractProcedureTestCase
         // 设置认证用户来模拟登录状态
         $this->setAuthenticatedUser($user);
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\GetDefaultDeliveryAddressParam();
 
-        $this->assertIsArray($result);
-        $this->assertEquals($addressId, $result['id']);
-        $this->assertEquals($userId, $result['userId']);
-        $this->assertEquals('张三', $result['consignee']);
-        $this->assertEquals('13800138000', $result['mobile']);
-        $this->assertEquals('中国', $result['country']);
-        $this->assertEquals('广东省', $result['province']);
-        $this->assertEquals('440000', $result['provinceCode']);
-        $this->assertEquals('深圳市', $result['city']);
-        $this->assertEquals('440300', $result['cityCode']);
-        $this->assertEquals('南山区', $result['district']);
-        $this->assertEquals('440305', $result['districtCode']);
-        $this->assertEquals('科技园南路88号', $result['addressLine']);
-        $this->assertEquals('518000', $result['postalCode']);
-        $this->assertEquals('公司', $result['addressTag']);
-        $this->assertTrue($result['isDefault']);
-        $this->assertArrayHasKey('createdTime', $result);
-        $this->assertArrayHasKey('updatedTime', $result);
+        $result = $this->procedure->execute($param);
+
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals($addressId, $data['id']);
+        $this->assertEquals($userId, $data['userId']);
+        $this->assertEquals('张三', $data['consignee']);
+        $this->assertEquals('13800138000', $data['mobile']);
+        $this->assertEquals('中国', $data['country']);
+        $this->assertEquals('广东省', $data['province']);
+        $this->assertEquals('440000', $data['provinceCode']);
+        $this->assertEquals('深圳市', $data['city']);
+        $this->assertEquals('440300', $data['cityCode']);
+        $this->assertEquals('南山区', $data['district']);
+        $this->assertEquals('440305', $data['districtCode']);
+        $this->assertEquals('科技园南路88号', $data['addressLine']);
+        $this->assertEquals('518000', $data['postalCode']);
+        $this->assertEquals('公司', $data['addressTag']);
+        $this->assertTrue($data['isDefault']);
+        $this->assertArrayHasKey('createdTime', $data);
+        $this->assertArrayHasKey('updatedTime', $data);
     }
 
     public function testExecuteReturnsEmptyArrayWhenNoDefaultAddress(): void
@@ -101,10 +105,13 @@ final class GetDefaultDeliveryAddressTest extends AbstractProcedureTestCase
         // 设置认证用户来模拟登录状态
         $this->setAuthenticatedUser($user);
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\GetDefaultDeliveryAddressParam();
 
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
+        $result = $this->procedure->execute($param);
+
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertEmpty($data);
     }
 
     public function testExecuteReturnsEmptyArrayWhenUserHasNoAddresses(): void
@@ -118,10 +125,13 @@ final class GetDefaultDeliveryAddressTest extends AbstractProcedureTestCase
         // 设置认证用户来模拟登录状态
         $this->setAuthenticatedUser($user);
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\GetDefaultDeliveryAddressParam();
 
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
+        $result = $this->procedure->execute($param);
+
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertEmpty($data);
     }
 
     public function testExecuteWithGenderField(): void
@@ -148,10 +158,13 @@ final class GetDefaultDeliveryAddressTest extends AbstractProcedureTestCase
         // 设置认证用户来模拟登录状态
         $this->setAuthenticatedUser($user);
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\GetDefaultDeliveryAddressParam();
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('gender', $result);
-        $this->assertArrayHasKey('genderLabel', $result);
+        $result = $this->procedure->execute($param);
+
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertArrayHasKey('gender', $data);
+        $this->assertArrayHasKey('genderLabel', $data);
     }
 }

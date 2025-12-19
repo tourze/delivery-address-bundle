@@ -11,10 +11,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\DeliveryAddressBundle\Repository\DeliveryAddressRepository;
 use Tourze\GBT2261\Gender;
+use Tourze\DeliveryAddressBundle\Param\UpdateDeliveryAddressParam;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
-use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
 use Tourze\JsonRPC\Core\Model\JsonRpcRequest;
@@ -24,54 +26,8 @@ use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
 #[MethodDoc(summary: '更新收货地址')]
 #[MethodExpose(method: 'UpdateDeliveryAddress')]
 #[IsGranted(attribute: 'IS_AUTHENTICATED_FULLY')]
-class UpdateDeliveryAddress extends LockableProcedure
+final class UpdateDeliveryAddress extends LockableProcedure
 {
-    #[MethodParam(description: '地址ID')]
-    #[Assert\Positive]
-    public int $addressId;
-
-    #[MethodParam(description: '收货人姓名')]
-    public ?string $consignee = null;
-
-    #[MethodParam(description: '收货手机号')]
-    public ?string $mobile = null;
-
-    #[MethodParam(description: '性别')]
-    public ?int $gender = null;
-
-    #[MethodParam(description: '国家')]
-    public ?string $country = null;
-
-    #[MethodParam(description: '省份')]
-    public ?string $province = null;
-
-    #[MethodParam(description: '省份代码')]
-    public ?string $provinceCode = null;
-
-    #[MethodParam(description: '城市')]
-    public ?string $city = null;
-
-    #[MethodParam(description: '城市代码')]
-    public ?string $cityCode = null;
-
-    #[MethodParam(description: '区/县')]
-    public ?string $district = null;
-
-    #[MethodParam(description: '区/县代码')]
-    public ?string $districtCode = null;
-
-    #[MethodParam(description: '详细地址')]
-    public ?string $addressLine = null;
-
-    #[MethodParam(description: '邮编')]
-    public ?string $postalCode = null;
-
-    #[MethodParam(description: '地址标签')]
-    public ?string $addressTag = null;
-
-    #[MethodParam(description: '是否设为默认')]
-    public ?bool $setDefault = null;
-
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly DeliveryAddressRepository $addressRepository,
@@ -79,96 +35,103 @@ class UpdateDeliveryAddress extends LockableProcedure
     ) {
     }
 
-    public function execute(): array
+    /**
+     * @phpstan-param UpdateDeliveryAddressParam $param
+     */
+    public function execute(UpdateDeliveryAddressParam|RpcParamInterface $param): ArrayResult
     {
         $user = $this->security->getUser();
-        assert(null !== $user, 'User must be authenticated due to IsGranted annotation');
-        $address = $this->addressRepository->find($this->addressId);
+        if (null === $user) {
+            throw new ApiException('用户未登录');
+        }
+        $address = $this->addressRepository->find($param->addressId);
         if (null === $address || $address->getUser() !== $user) {
             throw new ApiException('地址不存在');
         }
 
-        $this->updateAddressFields($address);
-        $this->handleDefaultSetting($address);
+        $this->updateAddressFields($address, $param);
+        $this->handleDefaultSetting($address, $param);
 
         $this->em->flush();
 
-        return [
+        return new ArrayResult([
             '__message' => '更新成功',
             'id' => $address->getId(),
-        ];
+        ]);
     }
 
-    private function updateAddressFields(DeliveryAddress $address): void
+    private function updateAddressFields(DeliveryAddress $address, UpdateDeliveryAddressParam $param): void
     {
-        $this->updateBasicFields($address);
-        $this->updateLocationFields($address);
-        $this->updateExtraFields($address);
+        $this->updateBasicFields($address, $param);
+        $this->updateLocationFields($address, $param);
+        $this->updateExtraFields($address, $param);
     }
 
-    private function updateBasicFields(DeliveryAddress $address): void
+    private function updateBasicFields(DeliveryAddress $address, UpdateDeliveryAddressParam $param): void
     {
-        if (null !== $this->consignee) {
-            $address->setConsignee($this->consignee);
+        if (null !== $param->consignee) {
+            $address->setConsignee($param->consignee);
         }
-        if (null !== $this->mobile) {
-            $address->setMobile($this->mobile);
+        if (null !== $param->mobile) {
+            $address->setMobile($param->mobile);
         }
-        if (null !== $this->gender) {
-            $gender = Gender::tryFrom($this->gender);
+        if (null !== $param->gender) {
+            $gender = Gender::tryFrom($param->gender);
             if (null === $gender) {
                 throw new ApiException('无效的性别');
             }
             $address->setGender($gender);
         }
-        if (null !== $this->country) {
-            $address->setCountry($this->country);
+        if (null !== $param->country) {
+            $address->setCountry($param->country);
         }
     }
 
-    private function updateLocationFields(DeliveryAddress $address): void
+    private function updateLocationFields(DeliveryAddress $address, UpdateDeliveryAddressParam $param): void
     {
-        if (null !== $this->province) {
-            $address->setProvince($this->province);
+        if (null !== $param->province) {
+            $address->setProvince($param->province);
         }
-        if (null !== $this->provinceCode) {
-            $address->setProvinceCode($this->provinceCode);
+        if (null !== $param->provinceCode) {
+            $address->setProvinceCode($param->provinceCode);
         }
-        if (null !== $this->city) {
-            $address->setCity($this->city);
+        if (null !== $param->city) {
+            $address->setCity($param->city);
         }
-        if (null !== $this->cityCode) {
-            $address->setCityCode($this->cityCode);
+        if (null !== $param->cityCode) {
+            $address->setCityCode($param->cityCode);
         }
-        if (null !== $this->district) {
-            $address->setDistrict($this->district);
+        if (null !== $param->district) {
+            $address->setDistrict($param->district);
         }
-        if (null !== $this->districtCode) {
-            $address->setDistrictCode($this->districtCode);
+        if (null !== $param->districtCode) {
+            $address->setDistrictCode($param->districtCode);
         }
     }
 
-    private function updateExtraFields(DeliveryAddress $address): void
+    private function updateExtraFields(DeliveryAddress $address, UpdateDeliveryAddressParam $param): void
     {
-        if (null !== $this->addressLine) {
-            $address->setAddressLine($this->addressLine);
+        if (null !== $param->addressLine) {
+            $address->setAddressLine($param->addressLine);
         }
-        if (null !== $this->postalCode) {
-            $address->setPostalCode($this->postalCode);
+        if (null !== $param->postalCode) {
+            $address->setPostalCode($param->postalCode);
         }
-        if (null !== $this->addressTag) {
-            $address->setAddressTag($this->addressTag);
+        if (null !== $param->addressTag) {
+            $address->setAddressTag($param->addressTag);
         }
     }
 
-    private function handleDefaultSetting(DeliveryAddress $address): void
+    private function handleDefaultSetting(DeliveryAddress $address, UpdateDeliveryAddressParam $param): void
     {
-        if (true === $this->setDefault) {
+        if (true === $param->setDefault) {
             $user = $this->security->getUser();
-            assert(null !== $user, 'User must be authenticated due to IsGranted annotation');
+            if (null === $user) {
+                throw new ApiException('用户未登录');
+            }
             $this->addressRepository->unsetDefaultForUser($user);
             $address->setIsDefault(true);
-        } elseif (false === $this->setDefault) {
+        } elseif (false === $param->setDefault) {
             $address->setIsDefault(false);
         }
     }

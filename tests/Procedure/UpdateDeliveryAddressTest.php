@@ -10,7 +10,8 @@ use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
 use Tourze\DeliveryAddressBundle\Procedure\UpdateDeliveryAddress;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 
 /**
  * @internal
@@ -57,26 +58,29 @@ final class UpdateDeliveryAddressTest extends AbstractProcedureTestCase
         $this->setAuthenticatedUser($user);
 
         // 更新地址信息
-        $this->procedure->addressId = $addressId;
-        $this->procedure->consignee = '李四';
-        $this->procedure->mobile = '13900139000';
-        $this->procedure->country = '美国';
-        $this->procedure->province = '加利福尼亚州';
-        $this->procedure->provinceCode = 'CA';
-        $this->procedure->city = '旧金山';
-        $this->procedure->cityCode = 'SF';
-        $this->procedure->district = '市中心';
-        $this->procedure->districtCode = 'DT';
-        $this->procedure->addressLine = '唐人街123号';
-        $this->procedure->postalCode = '94102';
-        $this->procedure->addressTag = '公司';
-        $this->procedure->setDefault = false;
+        $param = new \Tourze\DeliveryAddressBundle\Param\UpdateDeliveryAddressParam(
+            addressId: $addressId,
+            consignee: '李四',
+            mobile: '13900139000',
+            country: '美国',
+            province: '加利福尼亚州',
+            provinceCode: 'CA',
+            city: '旧金山',
+            cityCode: 'SF',
+            district: '市中心',
+            districtCode: 'DT',
+            addressLine: '唐人街123号',
+            postalCode: '94102',
+            addressTag: '公司',
+            setDefault: false,
+        );
 
-        $result = $this->procedure->execute();
+        $result = $this->procedure->execute($param);
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('__message', $result);
-        $this->assertEquals('更新成功', $result['__message']);
+        $this->assertInstanceOf(ArrayResult::class, $result);
+        $data = $result->toArray();
+        $this->assertArrayHasKey('__message', $data);
+        $this->assertEquals('更新成功', $data['__message']);
 
         // 验证地址信息已更新
         self::getEntityManager()->refresh($address);
@@ -102,12 +106,14 @@ final class UpdateDeliveryAddressTest extends AbstractProcedureTestCase
         $this->persistAndFlush($user);
         $this->setAuthenticatedUser($user);
 
-        $this->procedure->addressId = 999;
+        $param = new \Tourze\DeliveryAddressBundle\Param\UpdateDeliveryAddressParam(
+            addressId: 999,
+        );
 
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('地址不存在');
 
-        $this->procedure->execute();
+        $this->procedure->execute($param);
     }
 
     public function testExecuteThrowsExceptionWhenUserMismatch(): void
@@ -134,12 +140,15 @@ final class UpdateDeliveryAddressTest extends AbstractProcedureTestCase
         $user123 = $this->createNormalUser('user123', 'pass');
         $this->persistAndFlush($user123);
         $this->setAuthenticatedUser($user123);
-        $this->procedure->addressId = $addressId;
+
+        $param = new \Tourze\DeliveryAddressBundle\Param\UpdateDeliveryAddressParam(
+            addressId: $addressId,
+        );
 
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('地址不存在');
 
-        $this->procedure->execute();
+        $this->procedure->execute($param);
     }
 
     public function testExecuteSetsDefaultAddress(): void
@@ -180,15 +189,19 @@ final class UpdateDeliveryAddressTest extends AbstractProcedureTestCase
         $user123 = $this->createNormalUser('user123', 'pass');
         $this->persistAndFlush($user123);
         $this->setAuthenticatedUser($user123);
-        $this->procedure->addressId = $addressId;
-        $this->procedure->setDefault = true;
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\UpdateDeliveryAddressParam(
+            addressId: $addressId,
+            setDefault: true,
+        );
+
+        $result = $this->procedure->execute($param);
 
         // 验证结果
         self::getEntityManager()->refresh($address);
         $this->assertTrue($address->isDefault());
-        $this->assertEquals('更新成功', $result['__message']);
+        $data = $result->toArray();
+        $this->assertEquals('更新成功', $data['__message']);
 
         // 验证原有默认地址已取消默认
         self::getEntityManager()->refresh($existingDefaultAddress);
@@ -220,15 +233,19 @@ final class UpdateDeliveryAddressTest extends AbstractProcedureTestCase
         $user123 = $this->createNormalUser('user123', 'pass');
         $this->persistAndFlush($user123);
         $this->setAuthenticatedUser($user123);
-        $this->procedure->addressId = $addressId;
-        $this->procedure->setDefault = false;
 
-        $result = $this->procedure->execute();
+        $param = new \Tourze\DeliveryAddressBundle\Param\UpdateDeliveryAddressParam(
+            addressId: $addressId,
+            setDefault: false,
+        );
+
+        $result = $this->procedure->execute($param);
 
         // 验证结果
         self::getEntityManager()->refresh($address);
         $this->assertFalse($address->isDefault());
-        $this->assertEquals('更新成功', $result['__message']);
+        $data = $result->toArray();
+        $this->assertEquals('更新成功', $data['__message']);
     }
 
     public function testGetLockResource(): void

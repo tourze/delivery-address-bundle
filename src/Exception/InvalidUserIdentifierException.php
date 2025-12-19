@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tourze\DeliveryAddressBundle\Exception;
 
-class InvalidUserIdentifierException extends \RuntimeException
+final class InvalidUserIdentifierException extends \RuntimeException
 {
     public function __construct(string $identifier = '', ?\Throwable $previous = null)
     {

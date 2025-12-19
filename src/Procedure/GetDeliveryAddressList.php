@@ -7,10 +7,14 @@ namespace Tourze\DeliveryAddressBundle\Procedure;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tourze\DeliveryAddressBundle\Entity\DeliveryAddress;
+use Tourze\DeliveryAddressBundle\Param\GetDeliveryAddressListParam;
 use Tourze\DeliveryAddressBundle\Repository\DeliveryAddressRepository;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Exception\ApiException;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPC\Core\Procedure\BaseProcedure;
 use Tourze\JsonRPCPaginatorBundle\Procedure\PaginatorTrait;
 
@@ -18,7 +22,7 @@ use Tourze\JsonRPCPaginatorBundle\Procedure\PaginatorTrait;
 #[MethodDoc(summary: '获取用户收货地址列表')]
 #[MethodExpose(method: 'GetDeliveryAddressList')]
 #[IsGranted(attribute: 'IS_AUTHENTICATED_FULLY')]
-class GetDeliveryAddressList extends BaseProcedure
+final class GetDeliveryAddressList extends BaseProcedure
 {
     use PaginatorTrait;
 
@@ -28,16 +32,23 @@ class GetDeliveryAddressList extends BaseProcedure
     ) {
     }
 
-    public function execute(): array
+    /**
+     * @phpstan-param GetDeliveryAddressListParam $param
+     */
+    public function execute(GetDeliveryAddressListParam|RpcParamInterface $param): ArrayResult
     {
         $user = $this->security->getUser();
-        assert(null !== $user, 'User must be authenticated due to IsGranted annotation');
+        if (null === $user) {
+            throw new ApiException('用户未登录');
+        }
         $qb = $this->addressRepository->buildListQueryByUser($user);
 
-        return $this->fetchList(
+        return new ArrayResult($this->fetchList(
             $qb,
-            fn (DeliveryAddress $a) => $this->formatAddress($a)
-        );
+            fn (DeliveryAddress $a) => $this->formatAddress($a),
+            null,
+            $param
+        ));
     }
 
     /**
